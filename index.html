@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bulanık Mantık — Personel Değerlendirme Sistemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e3a5f;
+  --cyan: #00e5ff;
+  --purple: #a855f7;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --blue: #3b82f6;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --glow-cyan: 0 0 20px rgba(0,229,255,0.3);
+  --glow-purple: 0 0 20px rgba(168,85,247,0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header */
+.header {
+  position: relative;
+  z-index: 10;
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(0,229,255,0.05) 0%, transparent 100%);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: var(--glow-cyan);
+}
+
+.logo-text h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--cyan);
+  letter-spacing: -0.5px;
+  font-family: 'Space Mono', monospace;
+}
+
+.logo-text p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.badge-cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.08); }
+.badge-purple { border-color: var(--purple); color: var(--purple); background: rgba(168,85,247,0.08); }
+.badge-green { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.08); }
+
+/* Policy Selector */
+.policy-bar {
+  position: relative;
+  z-index: 10;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.policy-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.policy-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 1.5px solid;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.policy-btn[data-policy="kati"] { border-color: var(--red); color: var(--red); }
+.policy-btn[data-policy="kati"].active,
+.policy-btn[data-policy="kati"]:hover { background: var(--red); color: #fff; box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+
+.policy-btn[data-policy="dengeli"] { border-color: var(--blue); color: var(--blue); }
+.policy-btn[data-policy="dengeli"].active,
+.policy-btn[data-policy="dengeli"]:hover { background: var(--blue); color: #fff; box-shadow: 0 0 20px rgba(59,130,246,0.4); }
+
+.policy-btn[data-policy="esnek"] { border-color: var(--green); color: var(--green); }
+.policy-btn[data-policy="esnek"].active,
+.policy-btn[data-policy="esnek"]:hover { background: var(--green); color: #fff; box-shadow: 0 0 20px rgba(34,197,94,0.4); }
+
+.policy-info {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Stats bar */
+.stats-bar {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+  background: var(--border);
+}
+
+.stat-card {
+  background: var(--surface);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.stat-card:hover { background: var(--surface2); }
+
+.stat-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value.cyan { color: var(--cyan); }
+.stat-value.green { color: var(--green); }
+.stat-value.amber { color: var(--amber); }
+.stat-value.red { color: var(--red); }
+.stat-value.purple { color: var(--purple); }
+
+/* Main layout */
+.main {
+  position: relative;
+  z-index: 10;
+  padding: 32px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box:focus { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+.search-box::placeholder { color: var(--muted); }
+
+.filter-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn-add {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Table */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--cyan);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+thead th:hover { color: #fff; }
+thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+thead th.sorted .sort-icon { opacity: 1; }
+
+tbody tr {
+  border-bottom: 1px solid rgba(30,58,95,0.5);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+tbody tr:hover { background: var(--surface2); }
+tbody tr:last-child { border-bottom: none; }
+
+tbody td {
+  padding: 14px 16px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.rank-cell {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+  width: 48px;
+}
+
+.rank-1 { color: #fbbf24; }
+.rank-2 { color: #94a3b8; }
+.rank-3 { color: #b45309; }
+
+.name-cell strong {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.name-cell small {
+  color: var(--muted);
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+}
+
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.score-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+.score-val {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: right;
+}
+
+.mini-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 100px;
+}
+
+.mini-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.mini-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--cyan);
+}
+
+.decision-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  white-space: nowrap;
+  border: 1px solid;
+}
+
+.decision-ise { color: var(--green); border-color: var(--green); background: rgba(34,197,94,0.1); }
+.decision-gozden { color: var(--amber); border-color: var(--amber); background: rgba(245,158,11,0.1); }
+.decision-red { color: var(--red); border-color: var(--red); background: rgba(239,68,68,0.1); }
+
+.tnorm-pill {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--purple);
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cyan);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover { background: var(--red); }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.detail-card-title {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 8px;
+}
+
+.detail-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.detail-score-name { font-size: 13px; }
+.detail-score-val {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.policy-compare {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.policy-compare-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+
+.policy-compare-name {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+}
+
+.policy-compare-score {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 6px;
+}
+
+/* Form Modal */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus { border-color: var(--cyan); }
+
+.btn-submit {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Algorithm legend */
+.algo-legend {
+  margin-top: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.algo-legend-header {
+  background: var(--surface2);
+  padding: 14px 20px;
+  font-size: 11px;
+  color: var(--cyan);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.algo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--border);
+}
+
+.algo-card {
+  background: var(--surface);
+  padding: 16px 20px;
+}
+
+.algo-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-family: 'Space Mono', monospace;
+}
+
+.algo-card-formula {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 6px;
+}
+
+.algo-card-desc { font-size: 12px; color: var(--muted); }
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  color: var(--muted);
+  gap: 12px;
+  font-family: 'Space Mono', monospace;
+}
+
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--cyan);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  z-index: 9999;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 768px) {
+  .header, .policy-bar, .main { padding: 16px; }
+  .detail-grid, .policy-compare, .form-grid { grid-template-columns: 1fr; }
+  tbody td:nth-child(n+6) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-icon">🧠</div>
+      <div class="logo-text">
+        <h1>FUZZY · HR</h1>
+        <p>Bulanık Mantık Tabanlı Personel Değerlendirme Sistemi · 2025</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="badge badge-cyan">T-NORM</span>
+      <span class="badge badge-purple">S-NORM</span>
+      <span class="badge badge-green">PARAMETRİK</span>
+    </div>
+  </div>
+</header>
+
+<!-- POLICY SELECTOR -->
+<div class="policy-bar">
+  <span class="policy-label">ŞİRKET POLİTİKASI:</span>
+  <button class="policy-btn" data-policy="kati" onclick="setPolicy('kati')">⚔️ Katı — Finans/Savunma</button>
+  <button class="policy-btn active" data-policy="dengeli" onclick="setPolicy('dengeli')">⚖️ Dengeli — Teknoloji</button>
+  <button class="policy-btn" data-policy="esnek" onclick="setPolicy('esnek')">🚀 Esnek — Startup</button>
+  <span class="policy-info" id="policy-desc">Çarpım T-norm + Prob. S-norm</span>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar" id="stats-bar">
+  <div class="stat-card">
+    <div class="stat-value cyan" id="stat-total">—</div>
+    <div class="stat-label">Toplam Aday</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value green" id="stat-hire">—</div>
+    <div class="stat-label">İşe Al</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value amber" id="stat-review">—</div>
+    <div class="stat-label">Gözden Geçir</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value red" id="stat-reject">—</div>
+    <div class="stat-label">Red</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value purple" id="stat-avg">—</div>
+    <div class="stat-label">Ortalama Skor</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Controls -->
+  <div class="controls">
+    <input class="search-box" type="text" id="search" placeholder="🔍  Ada veya soyada göre ara…" oninput="filterTable()"/>
+    <select class="filter-select" id="filter-decision" onchange="filterTable()">
+      <option value="">Tüm Kararlar</option>
+      <option value="İşe Al">✅ İşe Al</option>
+      <option value="Gözden Geçir">⚠️ Gözden Geçir</option>
+      <option value="Red">❌ Red</option>
+    </select>
+    <button class="btn-add" onclick="openAddModal()">+ Aday Ekle</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('rank')"># <span class="sort-icon">↕</span></th>
+          <th>AD SOYAD</th>
+          <th onclick="sortBy('final_score')" class="sorted">SKOR <span class="sort-icon">↓</span></th>
+          <th>KARAR</th>
+          <th>TECRÜBESİ</th>
+          <th>EĞİTİM</th>
+          <th>Y. DİL</th>
+          <th>PROB ÇÖZME</th>
+          <th>T-NORM</th>
+          <th>S-NORM</th>
+          <th>BULANIK</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="11"><div class="loading"><div class="spinner"></div>Veriler yükleniyor…</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Algorithm legend -->
+  <div class="algo-legend">
+    <div class="algo-legend-header">🔬 KULLANILAN ALGORİTMALAR</div>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#ef4444">T-norm: Minimum (Zadeh)</div>
+        <div class="algo-card-formula">T(a,b) = min(a, b)</div>
+        <div class="algo-card-desc">En zayıf kriterin skoru alınır. Katı politikada kullanılır.</div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#3b82f6">T-norm: Çarpım (Product)</div>
+        <div class="algo-card-formula">T(a,b) = a × b</div>
+        <div class="algo-card-desc">Tüm kriterler sonucu etkiler. Dengeli politikada kullanılır.</div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#a855f7">T-norm: Łukasiewicz</div>
+        <div class="algo-card-formula">T(a,b) = max(0, a+b-1)</div>
+        <div class="algo-card-desc">En katı filtre. İkisi toplamı 1'i geçmezse sıfır verir.</div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#ef4444">S-norm: Maksimum (Zadeh)</div>
+        <div class="algo-card-formula">S(a,b) = max(a, b)</div>
+        <div class="algo-card-desc">En iyi kriterin skoru alınır. Bir alanda uzman yeterli.</div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#3b82f6">S-norm: Prob. Toplam</div>
+        <div class="algo-card-formula">S(a,b) = a+b−a×b</div>
+        <div class="algo-card-desc">İki gücü dengeli birleştirir, 1'i geçmez. En yaygın S-norm.</div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-title" style="color:#22c55e">S-norm: Łukasiewicz</div>
+        <div class="algo-card-formula">S(a,b) = min(1, a+b)</div>
+        <div class="algo-card-desc">En cömert yöntem. İkisi toplamı 1'i aşarsa direkt 1 ver.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
+    <h2 id="modal-title">👤 Aday Detayı</h2>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+    <h2>➕ Yeni Aday Ekle</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>AD</label>
+        <input id="f-ad" type="text" placeholder="Ahmet"/>
+      </div>
+      <div class="form-group">
+        <label>SOYAD</label>
+        <input id="f-soyad" type="text" placeholder="Yılmaz"/>
+      </div>
+      <div class="form-group">
+        <label>TECRÜBESİ</label>
+        <select id="f-tecrube">
+          <option value="1">1 — 0-1 yıl</option>
+          <option value="2">2 — 1-3 yıl</option>
+          <option value="3" selected>3 — 3-5 yıl</option>
+          <option value="4">4 — 5-8 yıl</option>
+          <option value="5">5 — 8+ yıl</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>YABANCI DİL SEVİYESİ</label>
+        <select id="f-dil">
+          <option value="1">1 — Başlangıç</option>
+          <option value="2">2 — Temel</option>
+          <option value="3" selected>3 — Orta</option>
+          <option value="4">4 — İleri</option>
+          <option value="5">5 — Uzman (C2)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>EĞİTİM DERECESİ</label>
+        <select id="f-egitim">
+          <option value="1">1 — Lise</option>
+          <option value="2">2 — Ön Lisans</option>
+          <option value="3" selected>3 — Lisans</option>
+          <option value="4">4 — Yüksek Lisans</option>
+          <option value="5">5 — Doktora</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>PROBLEM ÇÖZME (1-5)</label>
+        <select id="f-problem">
+          <option value="1">1 — Çok Zayıf</option>
+          <option value="2">2 — Zayıf</option>
+          <option value="3" selected>3 — Orta</option>
+          <option value="4">4 — İyi</option>
+          <option value="5">5 — Mükemmel</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitCandidate()">🚀 Değerlendir &amp; Ekle</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let currentPolicy = 'dengeli';
+let allCandidates = [];
+let sortKey = 'rank';
+let sortAsc = true;
+
+const POLICY_DESCS = {
+  kati: 'Łukasiewicz T-norm + Max S-norm · Savunma/Finans',
+  dengeli: 'Çarpım T-norm + Prob. S-norm · Teknoloji Şirketleri',
+  esnek: 'Min T-norm + Łukasiewicz S-norm · Startup/Yaratıcı',
+};
+
+const SCORE_LABELS = {
+  tecrube: 'Tecrübe', yabanci_dil: 'Yab. Dil',
+  egitim_derecesi: 'Eğitim', problem_cozme: 'Prob. Çözme',
+};
+
+async function loadData() {
+  const res = await fetch(`/api/candidates?policy=${currentPolicy}`);
+  const data = await res.json();
+  allCandidates = data.candidates;
+  renderTable(allCandidates);
+  loadStats();
+}
+
+async function loadStats() {
+  const res = await fetch(`/api/stats?policy=${currentPolicy}`);
+  const d = await res.json();
+  document.getElementById('stat-total').textContent = d.total;
+  document.getElementById('stat-hire').textContent = d.ise_al;
+  document.getElementById('stat-review').textContent = d.gozden_gecir;
+  document.getElementById('stat-reject').textContent = d.red;
+  document.getElementById('stat-avg').textContent = d.avg_score.toFixed(1);
+}
+
+function scoreColor(s) {
+  if (s >= 65) return '#22c55e';
+  if (s >= 40) return '#f59e0b';
+  return '#ef4444';
+}
+
+function starBars(val, max=5) {
+  const pct = (val / max * 100).toFixed(0);
+  return `<div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>`;
+}
+
+function renderTable(candidates) {
+  const tbody = document.getElementById('table-body');
+  if (!candidates.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Aday bulunamadı</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = candidates.map(c => {
+    const sc = scoreColor(c.final_score);
+    const dc = c.decision === 'İşe Al' ? 'decision-ise' :
+               c.decision === 'Gözden Geçir' ? 'decision-gozden' : 'decision-red';
+    const rankCls = c.rank <= 3 ? `rank-${c.rank}` : '';
+    const tnormMap = {kati:'Łukasiewicz', dengeli:'Çarpım', esnek:'Min'};
+    const snormMap = {kati:'Max', dengeli:'Prob.', esnek:'Łukasiewicz'};
+
+    return `<tr onclick="openDetail(${c.id})">
+      <td class="rank-cell ${rankCls}">${c.rank <= 3 ? ['🥇','🥈','🥉'][c.rank-1] : '#'+c.rank}</td>
+      <td class="name-cell">
+        <strong>${c.ad} ${c.soyad}</strong>
+        <small>ID: ${c.id}</small>
+      </td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar">
+            <div class="score-fill" style="width:${c.final_score}%;background:${sc}"></div>
+          </div>
+          <span class="score-val" style="color:${sc}">${c.final_score}</span>
+        </div>
+      </td>
+      <td><span class="decision-badge ${dc}">${c.decision}</span></td>
+      <td>
+        <div class="mini-bar-row">${c.ham.tecrube}/5 ${starBars(c.ham.tecrube)}</div>
+      </td>
+      <td>
+        <div class="mini-bar-row">${c.ham.egitim_derecesi}/5 ${starBars(c.ham.egitim_derecesi)}</div>
+      </td>
+      <td>
+        <div class="mini-bar-row">${c.ham.yabanci_dil}/5 ${starBars(c.ham.yabanci_dil)}</div>
+      </td>
+      <td>
+        <div class="mini-bar-row">${c.ham.problem_cozme}/5 ${starBars(c.ham.problem_cozme)}</div>
+      </td>
+      <td><span class="tnorm-pill">T: ${tnormMap[currentPolicy]}</span></td>
+      <td><span class="tnorm-pill" style="color:var(--cyan);border-color:rgba(0,229,255,0.3);background:rgba(0,229,255,0.08)">S: ${snormMap[currentPolicy]}</span></td>
+      <td>
+        <div class="mini-bar-wrap" style="min-width:80px">
+          ${Object.entries(c.fuzzy).map(([k,v])=>`
+            <div class="mini-bar-row">${k[0].toUpperCase()} <div class="mini-bar"><div class="mini-fill" style="width:${(v*100).toFixed(0)}%"></div></div></div>
+          `).join('')}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const dec = document.getElementById('filter-decision').value;
+  let filtered = allCandidates.filter(c => {
+    const name = `${c.ad} ${c.soyad}`.toLowerCase();
+    return name.includes(search) && (dec === '' || c.decision === dec);
+  });
+  renderTable(filtered);
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = false; }
+  allCandidates.sort((a, b) => {
+    let va = a[key], vb = b[key];
+    return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+  filterTable();
+}
+
+function setPolicy(p) {
+  currentPolicy = p;
+  document.querySelectorAll('.policy-btn').forEach(b => b.classList.toggle('active', b.dataset.policy === p));
+  document.getElementById('policy-desc').textContent = POLICY_DESCS[p];
+  loadData();
+}
+
+async function openDetail(id) {
+  document.getElementById('detail-modal').classList.add('open');
+  document.getElementById('modal-content').innerHTML = '<div class="loading"><div class="spinner"></div>Yükleniyor…</div>';
+  const res = await fetch(`/api/candidate/${id}?policy=${currentPolicy}`);
+  const data = await res.json();
+  const c = data.candidate;
+  const evals = data.evaluations;
+  document.getElementById('modal-title').textContent = `👤 ${c.ad} ${c.soyad}`;
+
+  const curr = evals[currentPolicy];
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-card-title">Ham Değerler</div>
+        ${['tecrube','yabanci_dil','egitim_derecesi','problem_cozme'].map(k=>`
+          <div class="detail-score-row">
+            <span class="detail-score-name">${SCORE_LABELS[k]}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="score-bar" style="width:80px"><div class="score-fill" style="width:${c[k]/5*100}%;background:var(--cyan)"></div></div>
+              <span class="detail-score-val">${c[k]}/5</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Bulanık Değerler (μ)</div>
+        ${Object.entries(curr.fuzzy).map(([k,v])=>`
+          <div class="detail-score-row">
+            <span class="detail-score-name">${SCORE_LABELS[k]}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="score-bar" style="width:80px"><div class="score-fill" style="width:${v*100}%;background:var(--purple)"></div></div>
+              <span class="detail-score-val" style="color:var(--purple)">${v}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">T-norm Skoru (VE)</div>
+        <div style="font-size:36px;font-family:'Space Mono',monospace;font-weight:700;color:var(--red);margin:8px 0">${curr.t_score}</div>
+        <div style="font-size:11px;color:var(--muted)">Zorunlu kriterler (Tecrübe + Eğitim)</div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">S-norm Skoru (VEYA)</div>
+        <div style="font-size:36px;font-family:'Space Mono',monospace;font-weight:700;color:var(--blue);margin:8px 0">${curr.s_score}</div>
+        <div style="font-size:11px;color:var(--muted)">Tamamlayıcı kriterler (Dil + Problem)</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:12px">POLİTİKA KARŞILAŞTIRMASI</div>
+    <div class="policy-compare">
+      ${['kati','dengeli','esnek'].map(p=>{
+        const e = evals[p];
+        const c2 = scoreColor(e.final_score);
+        const dc = e.decision==='İşe Al'?'decision-ise':e.decision==='Gözden Geçir'?'decision-gozden':'decision-red';
+        const labels = {kati:'⚔️ Katı',dengeli:'⚖️ Dengeli',esnek:'🚀 Esnek'};
+        const colors = {kati:'var(--red)',dengeli:'var(--blue)',esnek:'var(--green)'};
+        return `<div class="policy-compare-card" style="border-color:${colors[p]}20">
+          <div class="policy-compare-name" style="color:${colors[p]}">${labels[p]}</div>
+          <div class="policy-compare-score" style="color:${c2}">${e.final_score}</div>
+          <span class="decision-badge ${dc}">${e.decision}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+}
+
+async function submitCandidate() {
+  const data = {
+    ad: document.getElementById('f-ad').value.trim(),
+    soyad: document.getElementById('f-soyad').value.trim(),
+    tecrube: parseInt(document.getElementById('f-tecrube').value),
+    yabanci_dil: parseInt(document.getElementById('f-dil').value),
+    egitim_derecesi: parseInt(document.getElementById('f-egitim').value),
+    problem_cozme: parseInt(document.getElementById('f-problem').value),
+    policy: currentPolicy
+  };
+  if (!data.ad || !data.soyad) { showToast('Ad ve soyad zorunlu!'); return; }
+  const res = await fetch('/api/add_candidate', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result.success) {
+    closeModal('add-modal');
+    showToast(`✅ ${data.ad} ${data.soyad} eklendi! Skor: ${result.candidate.final_score}`);
+    loadData();
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// Init
+loadData();
+</script>
+</body>
+</html>
