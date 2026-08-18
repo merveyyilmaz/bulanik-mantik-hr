@@ -1,5 +1,4 @@
 # Bulanık Mantık Tabanlı Personel Değerlendirme Sistemi
-## Final Projesi 2025
 
 ---
 
